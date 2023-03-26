@@ -1,0 +1,14 @@
+* what
+summarize long articles in chunks, maintain previous chunk states.
+* why
+GPT* has a token size limit that prevents context too long from being fed to it.
+* how
+#+BEGIN_SRC bash 
+pip install -r requirements.txt
+F=2303.12712.pdf
+curl 'https://arxiv.org/pdf/'$F -o $F &&  pdf2txt $F | ./summarize.py $F-gpt4.json 
+jq -r '.input_chunks[].output' $F-gpt4.json 
+#+END_SRC
+* result & cache
+are saved in the output json file (1st argument).
+
