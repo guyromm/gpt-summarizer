@@ -15,14 +15,23 @@ import asyncio
 from chatgpt_wrapper.openai.api import AsyncOpenAIAPI
 from chatgpt_wrapper.openai.api_shell import ApiShell
 from chatgpt_wrapper.config import Config
+import hashlib
 
 MAX_TOKENS=4000
 tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
 lines=[]
 summaries=[]
-def chunker(lines,fr=0):
-    #print('chunker fr=',fr)
-    tosum=[] ; i=1
+
+def chunker(lines,fr=0,cache={}):
+    print('chunker fr=',fr,len(summaries),'summaries',sum([len(s) for s in summaries]),'overall summary bytes')
+    #raise Exception(cache['input_chunks'])
+    # should we use the cached chunk?
+    ic = [i for i in cache.get('input_chunks',[]) if i['fr']==fr]
+    if len(ic):
+        i=ic[0]['i']
+    else:
+        i=1
+    tosum=[]
     pt=0
     while True:
         if len(summaries):
@@ -43,46 +52,92 @@ def chunker(lines,fr=0):
 
 
 
-def make_chunks():
+async def make_chunks(gpt,save,cache):
+    global summaries
     chunks=[]
     for ln in sys.stdin:
         lines.append(ln)
     fr=0 ; i=1
     while fr<len(lines):
-        prefix,chunk,fr,i = chunker(lines,fr=fr)
+        prefix,chunk,fr,i = chunker(lines,fr=fr,cache=cache)
+        if i-fr<1:
+            pf = "\n".join(prefix).split('\n---\n')[1].split('\n===\n')[0]
+            prompt = "Summarize the text below '---', summary must be half as long as original.\n\n====\n\n"+pf
+            hs = hashlib.md5(prompt.encode('utf-8')).hexdigest()
+            print('* PREFIX') ; print(prompt) ; print('prefix len:',len(prompt),'tokens=',len(tokenizer(prompt)['input_ids']))
+            if not cache.get('cache'): cache['cache']={}
+            if cache['cache'].get(hs):
+                summary=cache['cache'].get(hs)
+            else:
+                summary=[]
+                first=False
+
+                async for chunk in gpt.ask_stream(prompt):
+                    if first:
+                        print("")
+                        first = False
+                    print(chunk, end="")
+                    summary.append(chunk)
+                    sys.stdout.flush()
+                cache['cache'][hs]=summary
+                save(cache,'.tmp',True)
+            summaries=["".join(summary)]
+            prefix,chunk,fr,i = chunker(lines,fr=fr,cache=cache)
+            #raise Exception('mid-summary:',summary)
+        print('yielding',fr,i,i-fr)
         yield {'text':"\n".join(chunk),"prefix":"\n".join(prefix),'fr':fr,'i':i}
         _=fr ; fr=i ; i=_+i
+    if not i-fr:
+        print('CHUNKSIZE',i,fr)
 
+def save(cache,suffix='',loss_ok=False):
+    print('save(',suffix,loss_ok,')')
+    fn = sys.argv[1]+suffix
+    if not loss_ok and os.path.exists(sys.argv[1]+suffix):
+        with open(fn,'r') as f:
+            j = json.load(f)
+            l = len(j.get('input_chunks',[]))
+            if l>len(cache.get('input_chunks',[])):
+                print('got input chunks cached on disk:',l,'input chunks in mem:',len(cache.get('input_chunks',[])))
+                raise Exception('overwriting more input chunks than i have already.')
+
+    fp = open(fn,'w')
+    # {"summaries":summaries,
+    #                      "input_chunks":input_chunks,
+    #                      "err":err}
+    fp.write(json.dumps(cache))
+    fp.close()
+    print('save(',fn,'): done')
+        
 async def main(reuse=True):
     if os.path.exists(sys.argv[1]):
         cache = json.load(open(sys.argv[1],'r'))
     else:
         cache = {'input_chunks':[]}
+    print('input chunks loaded (',len(cache.get('input_chunks')),')')    
     config = Config()
     config.set('chat.model', 'gpt4')
     config.set('disallowed_specials','()')
     gpt = AsyncOpenAIAPI(config)
     shell = ApiShell(config)
     err=None
+    print('input chunks pre-ze (',len(cache.get('input_chunks')),')')
     input_chunks=[]
-    def save(suffix=''):
-        fp = open(sys.argv[1]+suffix,'w')
-        fp.write(json.dumps({"summaries":summaries,
-                             "input_chunks":input_chunks,
-                             "err":err}))
-        fp.close()
-        
+    print('input chunks zeroed (',len(cache.get('input_chunks')),')')
+    
     try:
         cnt=0
-        for chunk in make_chunks():
+        gpt.set_model_temperature(0.0)
+        async for chunk in make_chunks(gpt,save,cache):
             input_chunks.append(chunk)
+
             chunksize = chunk['i']-chunk['fr']
             if chunksize<1:
                 print('error at',chunk['fr'],':',chunk['i'])
                 raise Exception('could not fit lines for summarization.')
             shell._print_markdown(f"# {cnt} summarizing {chunksize} lines: {chunk['fr']}:{chunk['i']}/{len(lines)}")
             first = True
-            gpt.set_model_temperature(0.0)
+
             summary=[]
             incache = [c for c in cache['input_chunks'] if c['text']==chunk['text']]
             if len(incache) and incache[0].get('output'):
@@ -100,14 +155,15 @@ async def main(reuse=True):
             input_chunks[-1]['output']="".join(summary)
             print("\n")
             # Work around rate limit if needed.
-            save('.tmp')
-            await asyncio.sleep(5)
+            save(cache,'.tmp',True)
+            #await asyncio.sleep(5)
             cnt+=1
     except Exception as e:
         print('an error occured:')
         print(traceback.format_exc())
         err=str(e)
     finally:
-        save()
+        print('in finally') 
+        save(cache)
 asyncio.run(main())
 
