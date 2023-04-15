@@ -9,12 +9,23 @@ for ln in sys.stdin:
     s+=ln
 sio = StringIO(s)
 e = exdown.extract_from_buffer(sio)
+filenames = sys.argv[2:]
+cnt=0
 for cb in e:
-    if len(sys.argv)>1 and cb.syntax not in (sys.argv[1:]):
+    if len(sys.argv)>1 and sys.argv[1] and cb.syntax not in (sys.argv[1:]):
         continue
-    #print(len(cb.code.split('\n')))
-    #print([e for e in dir(cb) if not e.startswith('_')])
-    for fn in ['expect_exception', 'expected_output', 'lineno', 'syntax']: #'code',
-        print(fn,':',getattr(cb,fn))
-    print(cb.code)
+    if cnt in filenames and filenames[cnt]:
+        fn = filenames[cnt]
+        fp = open(fn,'w')
+        fp.write(cb.code)
+        fp.close()
+        print('written',len(cb.code),'bytes to',fn)
+    else:
+        toprint=[]
+        for fn in ['expect_exception', 'expected_output', 'lineno', 'syntax']: #'code',
+            topr = f'{fn}:{getattr(cb,fn)}'
+            toprint.append(topr)
+        print('# ==='+','.join(toprint))
+        print(cb.code)
+    cnt+=1
     #print(ln,end='')

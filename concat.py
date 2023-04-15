@@ -2,7 +2,7 @@
 import sys
 
 orders = ' '.join(sys.argv[1:])
-print('below are contents of file(s), each starting with its name and path (prefixed with "---").',orders)
+print('below are file(s), each beginning with the filename (prefixed with "---"), followed by its contents.',orders)
 print("\n")
 for ln in sys.stdin:
     fn = ln.strip()
