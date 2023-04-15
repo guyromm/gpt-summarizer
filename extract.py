@@ -14,7 +14,7 @@ cnt=0
 for cb in e:
     if len(sys.argv)>1 and sys.argv[1] and cb.syntax not in (sys.argv[1:]):
         continue
-    if cnt in filenames and filenames[cnt]:
+    if len(filenames)>=cnt and filenames[cnt]:
         fn = filenames[cnt]
         fp = open(fn,'w')
         fp.write(cb.code)
