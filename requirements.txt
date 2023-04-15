@@ -1,3 +1,5 @@
 transformers
 git+https://github.com/mmabrouk/chatgpt-wrapper
 
+exdown
+pytest
