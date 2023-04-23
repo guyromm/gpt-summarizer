@@ -47,7 +47,7 @@ def process_file_write(contents: Dict[str, str], reasoning: str, id: int) -> Dic
 
 def process_shell(contents: str, reasoning: str, id: int) -> Dict[str, str]:
     result = subprocess.run(contents, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    return {
+    rt = {
         "command": "shell",
         "contents": contents,
         "reasoning": reasoning,
@@ -55,6 +55,8 @@ def process_shell(contents: str, reasoning: str, id: int) -> Dict[str, str]:
         "output": result.stdout,
         "error": result.stderr,
     }
+    print(json.dumps(rt))
+    return rt
 
 def process_reply(reply_data: Dict) -> Dict[str, str]:
     command = reply_data["command"]
