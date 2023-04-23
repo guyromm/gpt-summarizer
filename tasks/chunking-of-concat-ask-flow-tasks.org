@@ -1,0 +1,30 @@
+Provide code as valid diffs for the following tasks. do not repeat the task, just provide the code.
+
+* Tasks
+1. Implement tests to cover the new chunking feature.
+   a. Create test cases with varying input sizes and token counts.
+   b. Test the chunking functionality in `concat.py` and ensure it splits the input correctly.
+   c. Test the processing of chunked input in `ask.py` and verify the combined output is correct.
+
+2. Modify `concat.py` to handle chunking of input files when the token count exceeds 4000.
+   a. Implement a function to split the input files into chunks based on token count.
+   b. Update the main function to call the chunking function and pass the chunks to GPT-4.
+
+3. Update `ask.py` to handle chunked input from `concat.py`.
+   a. Modify the main function to accept chunked input and process each chunk separately.
+   b. Combine the responses from GPT-4 for each chunk and output the final result.
+
+* Testing Methodology
+1. Prepare test data with different input sizes and token counts, including cases where the token count is below and above 4000.
+
+2. Test the chunking functionality in `concat.py`:
+   a. Verify that the input files are split into chunks based on token count.
+   b. Ensure that no chunk has more than 4000 tokens.
+   c. Check that the chunks cover the entire input without any missing or overlapping content.
+
+3. Test the processing of chunked input in `ask.py`:
+   a. Verify that the script processes each chunk separately and generates a response for each chunk.
+   b. Check that the responses are combined correctly to form the final output.
+   c. Compare the final output with the expected output to ensure correctness.
+
+4. Perform end-to-end testing of the entire workflow (concat.py | ask.py) with the test data prepared in step 1. Verify that the final output is correct and as expected.

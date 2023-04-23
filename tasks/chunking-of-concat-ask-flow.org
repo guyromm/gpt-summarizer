@@ -1,0 +1,9 @@
+* objective
+implement chunking in the concat.py | ask.py usage scenario. gpt-4 may
+handle up to 4000 tokens.  therefore, when feeding it context too
+large (such as whole codebases) chunking is required for gpt-4 to have
+all of the context needed in order to follow directions.
+* methodology
+come up with a comprehensive list of tasks for the implementation of the feature, as well as a way to cover the feature with tests.
+
+

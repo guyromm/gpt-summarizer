@@ -1,0 +1,30 @@
+Here's the implementation plan for task 1 in tasks/chunking-of-concat-ask-flow-tasks.org:
+
+1. Implement tests to cover the new chunking feature.
+   a. Create test cases with varying input sizes and token counts.
+   b. Test the chunking functionality in `concat.py` and ensure it splits the input correctly.
+   c. Test the processing of chunked input in `ask.py` and verify the combined output is correct.
+
+To implement this, you can follow these steps:
+
+1. Create a `tests` directory to store your test files.
+
+2. Inside the `tests` directory, create a file named `test_concat.py`. In this file, you will write test cases for the chunking functionality in `concat.py`.
+
+3. Import the necessary modules and functions from `concat.py` into `test_concat.py`.
+
+4. Write test cases with varying input sizes and token counts. You can create sample input files with different content and store them in a `test_data` directory.
+
+5. In each test case, call the chunking function from `concat.py` with the appropriate input files and verify that the output is as expected. Ensure that the input is split correctly based on token count and that no chunk has more than 4000 tokens.
+
+6. Create another file named `test_ask.py` inside the `tests` directory. In this file, you will write test cases for the processing of chunked input in `ask.py`.
+
+7. Import the necessary modules and functions from `ask.py` into `test_ask.py`.
+
+8. Write test cases to process chunked input and verify the combined output is correct. You can use the sample input files created earlier and the output from the `concat.py` tests as input for these test cases.
+
+9. In each test case, call the main function from `ask.py` with the appropriate chunked input and verify that the output is as expected. Ensure that the responses from GPT-4 are combined correctly to form the final output.
+
+10. Run the tests using a test runner like `pytest` or by executing the test files directly. Verify that all test cases pass and that the chunking feature works as expected.
+
+11. (Optional) You can also set up continuous integration (CI) to automatically run your tests whenever changes are made to the codebase. This will help ensure that the chunking feature remains functional as you continue to develop and maintain the project.

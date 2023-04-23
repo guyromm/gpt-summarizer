@@ -1,14 +1,32 @@
 * what
-summarize long articles in chunks, maintain previous chunk states.
+- summarize.py :: receives a long text via stdin, feeds it to gpt in chunks, maintains a reducer with prior chunk states.
+- ask.py :: sends stdin to gpt, stdouts the response, temperature accepted as argument
+- concat.py :: receives a list of files over stdin, concatenates and outputs them in a gpt-understood format to be fed into ask.py
+- extract.py :: extract code blocks from a markdown gpt response
 * why
-GPT* has a token size limit that prevents context too long from being fed to it.
+- summarize.py :: tries to overcome the token size limitation of LLMs.
+- ask,concat,extract :: are an exploratory attempt to introduce gpt into the author's CLI-based development cycle.
+* usage
+** long text summirazation
+#+BEGIN_SRC bash
+cat long-text.txt | summarize.py long-text-cache.json
+#+END_SRC
+** code generation
+here is how a typical development scenario may look like.
+#+BEGIN_SRC bash
+  T=chunking-of-concat-ask-flow ;
+  (echo tasks/$T.org ; git ls-files) \
+	| concat.py "Follow the directives in tasks/$T.org" \
+	| ask.py \
+	| tee "$T.log" \
+	| extract.py "$T.1.diff" "$T.2.py"
+#+END_SRC
 * how
 #+BEGIN_SRC bash 
 pip install -r requirements.txt
-F=2303.12712.pdf
-curl 'https://arxiv.org/pdf/'$F -o $F &&  pdf2txt $F | ./summarize.py $F-gpt4.json 
-jq -r '.input_chunks[].output' $F-gpt4.json 
 #+END_SRC
-* result & cache
-are saved in the output json file (1st argument).
-
+* development directives for GPT
+1. all code must be provided in the form of valid diffs that can exracted with extract.py and applied on the spot.
+2. when applicable, reply with the specific concat.py | ask.py command pipeline including only the files necessary for the given task.
+3. tasks and text must be output in org-mode format.
+4. testing must come ahead of implementation
